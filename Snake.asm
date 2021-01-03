@@ -1,11 +1,4 @@
-
-
-
-
-
-
- SPEED=099h    ; the bigger the slower   
-; ENUMS for directions 
+ ; ENUMS for directions 
   UP		= 1         
   DOWN	= 2 
   RIGHT	= 3 
@@ -29,7 +22,10 @@
   .model small 
   .386
   .stack 
-.data  
+.data
+
+SPEED dw 099h    ; the bigger the slower   
+
 ; variables that are used for snake structure    
 ; 'snake' array: each item holds: x cord, y cord, ascii char and attribute (always black background)  
 ; its length is 80x25=2000 (dimenstions of screen) 
@@ -229,7 +225,11 @@ game_score db '0','0'
                cmp to_restart,1      ; checks whether to restart 
                jz program_restart 
              inc loop_counter2 
-             cmp loop_counter2,SPEED
+             mov si,offset SPEED
+             mov ax,[si]
+             mov si,offset loop_counter2
+             mov bx,[si]
+             cmp bx,ax
           jnz inner_delay_loop 
           mov loop_counter2,0 
            
