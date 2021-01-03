@@ -42,6 +42,7 @@ SPEED dw 099h    ; the bigger the slower
   attribute DB 15					; color of next food 
   char      DB 41h				; char of next food 
   food_type DB 1  	; type of next food, ;0: '-' (makes other snake smaller by one letter), o.w: ABC char
+  ; 1-increases the speed
                     ; 2-freeze the other snake 3-  
 
 ; variables for current food 
@@ -217,6 +218,7 @@ game_score db '0','0'
   ;delay loop 
   delay_loop:  
   ;inner delay_loop      
+
   inner_delay_loop: 
                cmp to_exit,1         ; checks whether to exit 
                jz program_end  
@@ -305,13 +307,20 @@ game_score db '0','0'
       mov cur_food_char,al   
       mov al,attribute 
       mov cur_food_attribute,al  
-      ; selects char for food according to food_type 
+       ; selects char for food according to food_type 
         mov dh,food_type 
         mov cur_food_type,dh 
         cmp dh,0              ; if cur_food_type==h then '-' is printed 
-        jnz print_food_label_3 
+        jnz print_food_label_speedpowerup; if cur_food_type==1 then '+' is printed
         mov ezer_byte,'-'    
         jmp print_food_label_4  
+         print_food_label_speedpowerup: 
+         cmp dh,1
+        jnz print_food_label_3 
+        mov ezer_byte,'+'
+        jmp print_food_label_4  
+       
+
         print_food_label_3:  
         mov dh,char 
         mov ezer_byte,dh 
@@ -538,11 +547,17 @@ game_score db '0','0'
         mov al,cur_food_y     
         cmp ds:[bx],al       
         jnz check_eating_end 
-      ; performs suitable actions for eating (adds or removes part of the snake)     
+        ; performs suitable actions for eating (adds or removes part of the snake)     
         cmp cur_food_type,0 
-        jnz check_eating_label1 
+      jnz   check_eating_label_speed
         call remove_part  
         jmp check_eating_end 
+        check_eating_label_speed:
+        cmp cur_food_type,1
+         jnz check_eating_label1 
+        lea di,SPEED
+        mov [di],39h
+         
         check_eating_label1: 
         call add_part  
       check_eating_end:   
