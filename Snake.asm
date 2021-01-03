@@ -434,34 +434,40 @@ game_start db  '00'
        
       cmp direction,UP 
       jnz update_head_label1     
-      dec ds:[bx] 
-      cmp ds:[bx],2300h
+      dec [bx]
+      mov ax,[bx] 
+      cmp al,00h
       jnz update_head_end  
-      mov ds:[bx],230fh      ; 'jump' from top border to bottom border 
+      mov al,0fh
+      mov [bx],ax      ; 'jump' from top border to bottom border 
       jmp update_head_end 
       update_head_label1: 
       cmp direction,DOWN  
       jnz update_head_label2  
-      inc ds:[bx]  
-      cmp ds:[bx],2310h   
+      inc [bx]  
+      cmp [bx],2310h   
       jnz update_head_end  
-      mov ds:[bx],2301h       ; 'jump' from bottom border to top border 
+      mov [bx],2301h       ; 'jump' from bottom border to top border 
       jmp update_head_end 
       update_head_label2: 
       cmp direction,RIGHT   
       jnz update_head_label3  
-      inc ds:[di]         
-      cmp ds:[di],233ch   
+      inc [di]
+      mov ax,[di]
+      cmp al,4fh
       jnz update_head_end  
-      mov ds:[di],2300h      ; 'jump' from right border to left border 
+      mov al,0h
+      mov [di],ax      ; 'jump' from right border to left border 
       jmp update_head_end 
       update_head_label3: 
       cmp direction,LEFT   
       jnz update_head_end  
-      dec ds:[di]           
-      cmp ds:[di],2300h   
+      dec [di]
+      mov ax,[di]
+      cmp al,0h   
       jnz update_head_end  
-      mov ds:[di],234fh       ; 'jump' from left border to right border 
+      mov al,4fh
+      mov [di],ax       ; 'jump' from left border to right border 
       update_head_end:  
   ret ;  
   update_head ENDP
