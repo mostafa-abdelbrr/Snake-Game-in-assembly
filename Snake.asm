@@ -289,7 +289,7 @@ game_start db  '00'
         jnz print_food_label_2 
         mov ah,1    
         print_food_label_2:    
-        cmp dl,1 
+        cmp al,1 
       jz print_food_loop 
       mov cur_food_x,al   
       mov cur_food_y,ah     
