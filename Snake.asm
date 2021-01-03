@@ -94,7 +94,7 @@ WHICH_WORD_FLAG db 1
 
 GAME_NAME1 db 'AHMED SCORE:','$'; this will be taken from the user but now for testing
 GAME_NAME2 db 'GASSER SCORE:','$';this will be sent by communications with the other PC, now for testing
-game_start db  '00'
+game_score db '0','0'
 
   .code
   main proc far 
@@ -196,11 +196,15 @@ game_start db  '00'
    mov ah,2 
    mov dx,000ch
    int 10H
-   mov ah,2
-   mov si,offset game_start
+   mov ah, 2
+   mov si,offset game_score
    mov dl ,[si]
    int 21h
    mov ah,2 
+   mov ah, 2
+   mov si,offset game_score[1]
+   mov dl ,[si]
+   int 21h
    mov dx,1000h
    int 10H
    mov ah,9
@@ -270,7 +274,11 @@ game_start db  '00'
    mov dx,000ch  
    int 10h 
    mov ah,2
-   mov si,offset game_start
+   mov si,offset game_score
+   mov dl ,[si]
+   int 21h
+   mov ah, 2
+   mov si,offset game_score[1]
    mov dl ,[si]
    int 21h
    ret
@@ -625,8 +633,16 @@ game_start db  '00'
   remove_part ENDP
 
    add_part PROC ; adds part of the snake (cordinates, char and attribute)   
-      mov si, offset game_start
-      inc [si]
+      mov si, offset game_score
+      cmp game_score[1],'9'
+      jz morethan9
+      inc game_score[1]
+      jmp continue_add
+      morethan9:
+      mov ax,'0'
+      mov game_score[1],al
+      inc game_score
+      continue_add:
       mov grow_state,BIGGER 
     ; [di]=last part ,[bx]=new part   
       lea bx,snake  
@@ -662,7 +678,9 @@ game_start db  '00'
 
    restart_game PROC ; restarts game. restores inital values of variables 
       mov game_over,0 
-      mov to_restart,0    
+      mov to_restart,0
+      mov game_score[0],'0'
+      mov game_score[1],'0'
       mov direction_for_next_cycle,UP 
       mov direction,UP 
       mov ah,0
@@ -708,7 +726,11 @@ game_start db  '00'
    mov dx,000ch
    int 10H
    mov ah,2
-   mov si,offset game_start
+   mov si,offset game_score
+   mov dl ,[si]
+   int 21h
+   mov ah, 2
+   mov si,offset game_score[1]
    mov dl ,[si]
    int 21h        
    mov ah,2 
