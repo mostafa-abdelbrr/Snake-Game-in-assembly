@@ -1374,7 +1374,8 @@ MAIN_GAME_SNAKE:
       mov ax,[di]
       inc ax
       mov [di],ax
-      cmp al,50h
+      dec ax
+      cmp al,4fh
       jnz update_head_end  
       mov al,0h
       mov [di],ax      ; 'jump' from right border to left border 
@@ -1386,6 +1387,7 @@ MAIN_GAME_SNAKE:
       mov ax,[di]
       dec ax
       mov [di],ax
+      inc ax
       cmp al,0h   
       jnz update_head_end  
       mov al,4fh
