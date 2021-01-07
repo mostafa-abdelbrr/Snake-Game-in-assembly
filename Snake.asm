@@ -874,6 +874,7 @@ mov bx, offset game_username
 dec bx
 append_score:
 inc bx
+add name_length,1
 cmp [bx],240Dh
 jnz append_score
 
@@ -896,6 +897,7 @@ inc bx
 mov [bx],':'
 inc bx
 mov [bx],'$'
+add name_length,10
 
    call clr_scr
       mov ah,0
@@ -1071,9 +1073,6 @@ MAIN_GAME_SNAKE:
    int 10H
    mov ah,9
    mov dx, offset game_username
-   int 21h
-   mov ah,9
-   ;mov dx, offset SCORE_MSG1
    int 21h
    mov ah,2 
    mov dx,0015h
@@ -1642,9 +1641,6 @@ MAIN_GAME_SNAKE:
    int 10H
    mov ah,9
    mov dx, offset game_username
-   int 21h
-   mov ah,9
-  ; mov dx, offset SCORE_MSG1
    int 21h
    mov ah,2 
    mov dx,0015h
