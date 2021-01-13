@@ -23,6 +23,12 @@
   .386
   .stack
 .data
+me db ?
+me_row db 0
+me_col db 5
+them db ?
+them_col db 5
+them_row db 12
 
 SPEED dw 099h   ; the bigger the slower
 SPEED2 dw 099h
@@ -98,6 +104,12 @@ SPEED2 dw 099h
   MENU_FIVE DB 'TO START CHATTING WITH A PLAYER PRESS F2','$'
   MENU_SIX DB 'TO EXIT PRESS F3','$'
   RESET_OR_QUIT DB 'Press "R" to play again (reset) or "Q" to quit the game.','$'
+  choose_level DB 'choose which level you want to play','$'
+  level1 DB 'Press F1 to play level 1 (a slow snake)','$'
+  level2 DB 'Press F2 to play lvevl 2 (a quick snake)','$'
+confirmgame DB 'Are you sure you want to start the game?','$'
+confirmgame1 DB 'Press F1 to start or F2 to return to main menu','$'
+
 
 snake_name_1 db '           | |    ','$'
 snake_name_2 db ' ___ _ __  __ _| | _____','$'
@@ -927,7 +939,7 @@ mov [bx],':'
 inc bx
 mov [bx],'$'
 add name_length,10
-
+main_menu2:
   call clr_scr
     mov ah,0
   mov al,03h
@@ -963,11 +975,13 @@ add name_length,10
   mov ah,9
   int 21H
   mov ah,2
+
   mov dx, 0820h
   int 10h
   mov dx, offset MENU_ONE
   mov ah,9
   int 21H
+     welcomemenu:
   mov ah,2
   mov dx, 0920h
   int 10h
@@ -1001,16 +1015,210 @@ add name_length,10
   mov ah,0
   int 16h
   cmp ah,3bh
-  jz MAIN_GAME_SNAKE
+  jz confirmgamelabel
+ ; jz MAIN_GAME_SNAKE
   cmp ah,3ch
   jz MAIN_CHAT_MODULE
   cmp ah,3dh
   jz program_end
   jmp main_menu
 
+confirmgamelabel:
+mov ah,0
+mov al,03h  
+int 10h
+ mov ah,2
+  mov dx, 0B16h
+  int 10h
+  mov dx, offset confirmgame
+  mov ah,9
+  int 21H
+  mov ah,2
+  mov dx ,0D14h
+  int 10h
+  mov dx, offset confirmgame1
+  mov ah,9
+  int 21H
 
-  MAIN_CHAT_MODULE:; PHASE2
+mov ah,0
+  int 16h
+  cmp ah,3bh 
+  jz sub_Menu
+cmp ah,3ch 
+jz gobacktomenu
+ 
+ gobacktomenu:
+ mov ah,0
+mov al,03h  
+int 10h
+jmp welcomemenu
 
+ MAIN_CHAT_MODULE:; PHASE2
+mov ax,@data
+mov ds,ax
+mov ax,03h
+int 10h
+begin:
+
+mov ah,2
+mov dh,me_row
+mov dl,me_col
+int 10h
+
+mov ah,06h
+mov dl,0ffh
+int 21h
+;mov ah,1
+;int 21h
+mov cx,1000
+jnz saveandsend
+jz receive
+
+saveandsend:
+mov me,al
+cmp me,3dh
+jz main_menu2
+cmp me,0Dh
+jnz continuechecks
+inc me_row
+mov me_col,4
+continuechecks:
+mov ah,2
+mov dl,me
+int 21h
+call setup
+mov dx,3FDH   ;line status register
+Again: 
+in al,dx       ;read line status
+test al,00100000b
+Jz Again        ;Not empty
+inc me_col
+cmp me_col,80
+jnz continuesend
+mov me_col,5
+inc me_row
+cmp me_row,12
+js continuesend
+mov ah,07h
+mov al,00h
+mov bh,0fh
+mov cx,0
+mov dl,80
+mov dh,12
+int 10h ; scroll chat window
+;mov me_row,0
+;mov me_col,5
+continuesend:
+;if empty put the value in transmit data register
+mov dx,3F8H     ;transmit data register
+mov al,me
+out dx,al
+
+mov cx,1000
+receive:
+call setup
+;Checking data is ready
+mov dx,3FDH ;line status register
+check: in al,dx
+cmp cx,0
+jz begin
+dec cx
+test al,1
+jz check ;not ready
+;if ready ,read the value in receive data register 
+mov dx ,03f8h
+in al,dx
+mov them,al
+
+inc them_col
+cmp them_col,80
+jnz continuerec
+mov them_col,5
+inc them_row
+cmp them_row,25
+jnz continuerec
+mov them_row,12
+mov ah,07h
+mov al,0
+mov bh,0fh
+mov cx,1200
+mov dl,80
+mov dh,25
+int 10h ; scroll chat window
+
+
+cmp them,0Dh
+jnz continuerec
+inc them_row
+mov them_col,4
+continuerec:
+
+mov ah,2
+mov dh,them_row
+mov dl,them_col
+int 10h
+
+       ; MOV AH,09H
+        ;LEA DX,them
+        ;INT 21H
+mov ah,02h
+mov dl,them
+int 21h
+
+
+
+jmp begin
+
+
+
+sub_Menu:
+mov ah,0
+mov al,03h  
+int 10h
+ mov ah,2
+  mov dx, 0B16h
+  int 10h
+  mov dx, offset choose_level
+  mov ah,9
+  int 21H
+  mov ah,2
+  mov dx ,0D14h
+  int 10h
+  mov dx, offset level1
+  mov ah,9
+  int 21H
+   mov ah,2
+  mov dx ,0F14h
+  int 10h
+  mov dx, offset level2
+  mov ah,9
+  int 21H
+mov ah,0
+  int 16h
+  cmp ah,3bh 
+  jz slowerspeed
+cmp ah,3ch 
+jz fastspeed
+ 
+
+
+
+
+slowerspeed:
+lea di,SPEED
+mov [di],105h
+lea di,SPEED2
+mov [di],105h
+jmp snakescreen
+
+fastspeed:
+lea di,SPEED
+mov [di],29h
+lea di,SPEED2
+mov [di],29h
+jmp snakescreen
+
+snakescreen:
 call clr_scr
   mov ax,13h
 	int 10h
@@ -1034,11 +1242,6 @@ mov dx,200
        mov dx,0
        mov cx,0
   		int 10h
-
-
-
-
-
   	mov ax,13h
   	mov di, offset img
   	mov cx,250
@@ -1115,7 +1318,7 @@ MAIN_GAME_SNAKE:
   mov si,offset game_score[1]
   mov dl ,[si]
   int 21h
-  mov dx,1000h
+  mov dx,0fffh
   int 10H
   mov ah,9
   mov bh,0
@@ -1186,19 +1389,19 @@ MAIN_GAME_SNAKE:
     mov direction,al
     call inc_random_values ; increases the values that are used for random
     call erase_tail      ; erases last part of snake in the screen
-    call erase_tail2
+    ;call erase_tail2
     call update_snake    ; updates cordinates of each part
     call update_head     ; updates cordinates if the first part according to 'direction'
-    call update_head2
+   ; call update_head2
     call handle_grow_state ; responsible for makeing the snake bigger or smaller
-    call handle_grow_state2
+    ;call handle_grow_state2
     call print_snake     ; prints the snake on screen
-    call print_snake2
+    ;call print_snake2
     call check_eating    ; checks if the snake's head is on the food
-    call check_eating2
+    ;call check_eating2
     call update_score
     call check_collision  ; checks for collision of sbake with itself
-    call check_collision2
+    ;call check_collision2
   ret ; used in main loop
   actions ENDP
 
@@ -1997,6 +2200,34 @@ lea di,snake12
   ret ; used by 'restart_game'
   clr_scr ENDP
 
+setup proc
+
+ ;Set Divisor Latch Access Bit
+mov dx,3fbh ; Line Control Register
+mov al,10000000b ;Set Divisor Latch Access Bit
+out dx,al ;Out it
+
+;Set LSB byte of the Baud Rate Divisor Latch register.
+
+mov dx,3f8h
+mov al,1h
+out dx,al
+
+;Set MSB byte of the Baud Rate Divisor Latch register.
+mov dx,3f9h
+mov al,0h
+out dx,al
+;Set port configuration
+mov dx,3fbh
+mov al,00011011b
+;0:Access to Receiver buffer, Transmitter buffer
+;0:Set Break disabled
+;011:Even Parity
+;0:One Stop Bit
+;11:8bits
+out dx,al
+ret
+setup endp
 
 
   main endp
